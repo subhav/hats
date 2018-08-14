@@ -79,7 +79,7 @@ func try(strategy []guess, n int) bool {
 
 // Positive Modulus
 func mod(x int, n int) int {
-	return (x + n) % n
+	return ((x % n) + n) % n
 }
 
 func main() {
@@ -91,6 +91,7 @@ func main() {
 			return (v[0] + 1) % 2
 		},
 	}
+	fmt.Println(try(s2, 2))
 
 	// Strategy which I drew out on paper for 3
 	s3 := []guess{
@@ -107,6 +108,8 @@ func main() {
 			return mod(v[0] + v[1], 3)
 		},
 	}
+	fmt.Println(try(s3, 3))
+
 	// Alternate version, trying to move symbols around
 	// and see what works.
 	s3Alt := []guess{
@@ -123,39 +126,46 @@ func main() {
 			return mod(v[0] - v[1] + 2, 3)
 		},
 	}
+	fmt.Println(try(s3Alt, 3))
 
 	// Let's generate these functions programmatically
-	s3Gen := make([]guess, 3)
-	for i := 0; i < 3; i++ {
-		s3Gen[i] = func(v []int) int {
-			var res int
-			for j := 0; j < 3; j++ {
-				if i == j {
-					continue
-				}
-				if j < i {
-					res -= j
-				} else if j > i {
-					res += j
-				}
-			}
-			res += i
-			return mod(res, 3)
-		}
-	}
-
-	s4 := make([]guess, 4)
-	for i := 0; i < 4; i++ {
-		i := i
-		s4[i] = func(v []int) int {
-			return v[i]
-		}
-	}
-
-	fmt.Println(try(s2, 2))
-	fmt.Println(try(s3, 3))
-	fmt.Println(try(s3Alt, 3))
+	s3Gen := generateStrategy(3)
 	fmt.Println(try(s3Gen, 3))
+
+	// Wait, hold on. It works...?
+	s4 := generateStrategy(4)
 	fmt.Println(try(s4, 4))
 
+	// But how?!
+	s7 := generateStrategy(7)
+	fmt.Println(try(s7, 7))
+}
+
+// Scaling my solution for 3 above:
+// g_0 = v_1 + v_2 + ... + v_n
+// g_i = v_0 - v_1 - ... - v_i - ... - v_n-1 + i
+func generateStrategy(n int) []guess {
+	g := make([]guess, n)
+	g[0] = func(v []int) int {
+		var res int
+		for i := 1; i < n; i++ {
+			res += v[i]
+		}
+		return mod(res, n)
+	}
+	for i := 1; i < n; i++ {
+		i := i
+		g[i] = func(v []int) int {
+			res := v[0]
+			for j := 1; j < n; j++ {
+				if j == i {
+					continue
+				}
+				res -= v[j]
+			}
+			res += i
+			return mod(res, n)
+		}
+	}
+	return g
 }
